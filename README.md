@@ -19,10 +19,11 @@ npm install runtime-detector
 
 ## Usage
 
+### Get Environment Information
+
 ```typescript
 import { getCurrentEnvironment, isNodejs, isNotNodejs, onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
 
-// 1. Get current environment information 
 const env = getCurrentEnvironment();
 console.log(`Current environment: ${env.name}, version: ${env.version}`);
 
@@ -33,8 +34,12 @@ if (isNodejs) {
 if (isNotNodejs) {
   console.log(`Running in non-Node.js environment`);
 }
+```
 
-// 2. Execute synchronous code
+### Execute Code depending on environment
+
+```typescript
+import { onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
 // Execute only in Node.js environment
 onNodejs((env) => {
   console.log(`Running in Node.js ${env.version}`);
@@ -56,8 +61,13 @@ onBun((env) => {
 onDeno((env) => {
   console.log(`Running in Deno ${env.version}`);
 });
+```
 
-// 3. Execute asynchronous code
+### Execute Asynchronous Code depending on environment
+
+```typescript
+import { onNodejsAsync } from "runtime-detector";
+
 // Execute only in Node.js environment
 await onNodejsAsync(async (env) => {
   const response = await fetch('https://api.example.com');
@@ -65,7 +75,13 @@ await onNodejsAsync(async (env) => {
   console.log(data);
 });
 
-// 4. Execute code with return value
+```
+
+### Execute Code with Return Value
+
+```typescript
+import { onNodejs } from "runtime-detector";
+
 const result = onNodejs((env) => {
   return `Result from Node.js ${env.version}`;
 });
@@ -74,12 +90,19 @@ const result = onNodejs((env) => {
 if (result) {
   console.log(result);
 }
+```
 
-// 5. Execute when not in specific environment
+### Execute Code when not in specific environment
+
+```typescript
+import { onNotNodejs, onNotBrowser } from "runtime-detector";
+
+// Execute when not in Node.js environment
 onNotNodejs((env) => {
   console.log(`Running in ${env.name} environment (not Node.js)`);
 });
 
+// Execute when not in Browser environment
 onNotBrowser((env) => {
   console.log(`Running in ${env.name} environment (not Browser)`);
 });
@@ -145,10 +168,11 @@ npm install runtime-detector
 
 ## 사용법
 
-```typescript
-import { getCurrentEnvironment, isNodejs, isNotNodejs, onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
+### 현재 환경 정보 확인하기
 
-// 1. 현재 환경 정보 확인하기
+```typescript
+import { getCurrentEnvironment, isNodejs, isNotNodejs } from "runtime-detector";
+
 const env = getCurrentEnvironment();
 console.log(`현재 환경: ${env.name}, 버전: ${env.version}`);
 
@@ -159,8 +183,13 @@ if (isNodejs) {
 if (isNotNodejs) {
   console.log(`Node.js가 아닌 환경에서 실행 중`);
 }
+```
 
-// 2. 동기 코드 실행하기
+### 동기 코드 실행하기
+
+```typescript
+import { onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
+
 // Node.js 환경에서만 실행
 onNodejs((env) => {
   console.log(`Node.js ${env.version}에서 실행 중`);
@@ -182,16 +211,26 @@ onBun((env) => {
 onDeno((env) => {
   console.log(`Deno ${env.version}에서 실행 중`);
 });
+```
 
-// 3. 비동기 코드 실행하기
+### 비동기 코드 실행하기
+
+```typescript
+import { onNodejsAsync } from "runtime-detector";
+
 // Node.js 환경에서만 실행
 await onNodejsAsync(async (env) => {
   const response = await fetch('https://api.example.com');
   const data = await response.json();
   console.log(data);
 });
+```
 
-// 4. 반환값이 있는 코드 실행하기
+### 반환값이 있는 코드 실행하기
+
+```typescript
+import { onNodejs } from "runtime-detector";
+
 const result = onNodejs((env) => {
   return `Node.js ${env.version}에서 실행된 결과`;
 });
@@ -200,8 +239,14 @@ const result = onNodejs((env) => {
 if (result) {
   console.log(result);
 }
+```
 
-// 5. 특정 환경이 아닐 때 실행하기
+### 특정 환경이 아닐 때 실행하기
+
+```typescript
+import { onNotNodejs, onNotBrowser } from "runtime-detector";
+
+// Node.js가 아닌 환경에서 실행
 onNotNodejs((env) => {
   console.log(`Node.js가 아닌 ${env.name} 환경에서 실행 중`);
 });
