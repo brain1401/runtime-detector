@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    // ECMAScript 대상 버전 설정
+    "target": "ES2016",
+    "module": "ESNext",
+    "lib": ["ES2016", "DOM", "DOM.Iterable"],
+
+    // 모듈 해석 및 출력 설정
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+
+    // 엄격한 타입 체크 설정
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+
+    // 코드 품질 관련 설정
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // 선언 파일 생성 설정
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+
+    // 출력 설정
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    // 기타 설정
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+
+    // JavaScript 지원 설정
+    "allowJs": false,
+    "checkJs": false
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts"]
+}

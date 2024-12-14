@@ -1,0 +1,44 @@
+{
+  "name": "runtime-detector",
+  "version": "1.0.0",
+  "description": "A lightweight runtime environment detector for Bun, Node.js, Deno and Browser",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "environment",
+    "detector",
+    "runtime",
+    "bun",
+    "node",
+    "deno",
+    "browser",
+    "detect"
+  ],
+  "author": "Aiden Hong",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brain1401/runtime-detector.git"
+  },
+  "bugs": {
+    "url": "https://github.com/brain1401/runtime-detector/issues"
+  },
+  "homepage": "https://github.com/brain1401/runtime-detector#readme",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.0.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "tsup": "latest",
+    "typescript": "^5.0.0"
+  }
+}
