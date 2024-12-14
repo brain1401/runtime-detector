@@ -6,7 +6,7 @@ A lightweight runtime environment detector for Bun, Node.js, Deno and Browser en
 
 - Zero dependencies
 - TypeScript support
-- Lightweight (~2KB minified)
+- Lightweight (About 7KB minified)
 - Detects Bun, Node.js, Deno, and Browser environments
 - Provides both synchronous and asynchronous APIs
 - Type-safe environment-specific code execution
@@ -136,7 +136,7 @@ Bun, Node.js, Deno, 브라우저 환경을 감지하는 라이브러리입니다
 
 - 의존성 없음
 - TypeScript 지원
-- 가벼움 (~2KB minified)
+- 가벼움 (7KB minified)
 - Bun, Node.js, Deno, 브라우저 환경을 감지
 - 동기, 비동기 모두 지원
 - 환경별 코드 실행 타입 안전
