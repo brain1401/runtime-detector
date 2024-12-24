@@ -1,7 +1,7 @@
 /**
  * Represents the names of supported runtime environments.
  *
- * @typedef {("Browser"|"Nodejs"|"Bun"|"Deno")} EnvironmentName
+ * @typedef {("Browser"|"Nodejs"|"Bun"|"Deno"|"Unknown")} EnvironmentName
  *
  * @description
  * - "Browser": Represents a web browser environment
@@ -9,7 +9,7 @@
  * - "Bun": Represents the Bun JavaScript runtime environment
  * - "Deno": Represents the Deno runtime environment
  */
-export type EnvironmentName = "Browser" | "Nodejs" | "Bun" | "Deno";
+export type EnvironmentName = "Browser" | "Nodejs" | "Bun" | "Deno" | "Unknown";
 
 /**
  * Contains detailed information about the detected runtime environment.
@@ -17,20 +17,19 @@ export type EnvironmentName = "Browser" | "Nodejs" | "Bun" | "Deno";
  * @typedef {Object} EnvironmentInfo
  * @property {EnvironmentName|"Unknown"} name - The name of the detected environment, or "Unknown" if not recognized
  * @property {string} version - The version of the detected environment
- * @property {boolean} isDetected - Indicates whether the environment was successfully detected
- *
+ * @property {string | undefined} [browserName] - The name of the detected browser (only available in Browser environment)
  * @example
  * const envInfo: EnvironmentInfo = {
  *   name: "Nodejs",
- *   version: "14.17.0",
- *   isDetected: true
+ *   version: "22.1.0",
+ *   browserName: undefined,
  * };
+ *
  */
 export type EnvironmentInfo = {
-  name: EnvironmentName | "Unknown";
+  name: EnvironmentName;
   version: string;
   browserName?: string;
-  isDetected: boolean;
 };
 
 /**
@@ -40,7 +39,7 @@ export type EnvironmentInfo = {
  * @property {function(): boolean} detect - A function that returns true if the environment is detected
  * @property {EnvironmentName} name - The name of the environment
  * @property {function(): string} getVersion - A function that retrieves the version of the environment
- *
+ * @property {function(): string} [getBrowserName] - A function that retrieves the name of the browser (only available in Browser environment)
  * @example
  * const nodeEnvironment: Environment = {
  *   detect: () => typeof process !== 'undefined' && !!process.versions?.node,
@@ -73,7 +72,7 @@ export type Environment = {
  * };
  */
 export type EnvironmentMap = {
-  [K in EnvironmentName]: Environment;
+  [K in Exclude<EnvironmentName, "Unknown">]: Environment;
 };
 
 /**
