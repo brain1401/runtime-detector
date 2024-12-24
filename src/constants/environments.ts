@@ -22,30 +22,37 @@ export const environments: EnvironmentMap = {
    * Bun runtime environment configuration
    */
   Bun: {
-    detect: (): boolean => typeof (globalThis as any).Bun !== "undefined",
+    detect: (): boolean => {
+      return "Bun" in globalThis;
+    },
     name: "Bun",
     getVersion: (): string => (globalThis as any).Bun?.version || "unknown",
+  },
+  /**
+   * Deno runtime environment configuration
+   */
+  Deno: {
+    detect: (): boolean => {
+      return "Deno" in globalThis;
+    },
+    name: "Deno",
+    getVersion: (): string =>
+      (globalThis as any).Deno?.version?.deno || "unknown",
   },
   /**
    * Node.js runtime environment configuration
    * Checks for Node.js specific properties to differentiate from Bun and Deno
    */
   Nodejs: {
-    detect: (): boolean =>
-      typeof process !== "undefined" &&
-      !!process.versions.node &&
-      !(globalThis as any).Bun &&
-      !(globalThis as any).Deno,
+    detect: (): boolean => {
+      return (
+        typeof process !== "undefined" &&
+        !!process.versions?.node && 
+        !("Bun" in globalThis) &&
+        !("Deno" in globalThis)
+      );
+    },
     name: "Nodejs",
-    getVersion: (): string => process.version || "unknown",
-  },
-  /**
-   * Deno runtime environment configuration
-   */
-  Deno: {
-    detect: (): boolean => typeof (globalThis as any).Deno !== "undefined",
-    name: "Deno",
-    getVersion: (): string =>
-      (globalThis as any).Deno?.version?.deno || "unknown",
+    getVersion: (): string => process?.version || "unknown",
   },
 };
