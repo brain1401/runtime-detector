@@ -28,7 +28,20 @@ yarn add runtime-detector
 
 # Using pnpm
 pnpm add runtime-detector
+
+# Using bun
+bun add runtime-detector
 ```
+
+## 📋 Release Notes
+
+### 1.2.0
+
+- 🐛 **Bug Fix**: Fixed critical issue where `on*` functions could potentially execute in incorrect environments
+  - Previously, code within environment-specific functions could sometimes run in unintended environments
+  - Now strictly enforces environment checks before executing any code
+  - Affects all environment-specific functions (`onNodejs`, `onBrowser`, `onBun`, `onDeno`, etc.)
+
 
 ## 📝 Module Support
 
@@ -218,7 +231,20 @@ yarn add runtime-detector
 
 # pnpm 사용
 pnpm add runtime-detector
+
+# bun 사용
+bun add runtime-detector
 ```
+
+## 📋 릴리스 노트
+
+### 1.2.0
+
+- 🐛 **버그 수정**: `on*` 함수들이 잘못된 환경에서 실행될 수 있는 중요한 문제 해결
+  - 이전에는 환경별 함수 내의 코드가 의도하지 않은 환경에서 실행될 수 있었음
+  - 이제 코드 실행 전에 환경 검사를 엄격하게 수행
+  - 모든 환경별 함수에 적용 (`onNodejs`, `onBrowser`, `onBun`, `onDeno` 등)
+
 
 ## 📝 모듈 지원
 
