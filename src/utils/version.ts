@@ -1,3 +1,5 @@
+import { EnvironmentInfo, EnvironmentName } from "../types";
+
 type BrowserInfo = {
   name: string;
   version: string;
@@ -9,7 +11,7 @@ type BrowserInfo = {
  * @returns {string} Browser version or 'unknown' if detection fails
  */
 export function getBrowserVersion(): BrowserInfo {
-  const userAgent = navigator.userAgent;
+  const userAgent = navigator.userAgent || "";
 
   if (userAgent.includes("Firefox/")) {
     const version = userAgent.split("Firefox/")[1].split(" ")[0];
@@ -32,4 +34,16 @@ export function getBrowserVersion(): BrowserInfo {
   }
 
   return { name: "Unknown", version: "unknown" };
+}
+
+export function simulateEnvironmentInfo(
+  envName: EnvironmentName
+): EnvironmentInfo {
+  const env: EnvironmentInfo = {
+    name: envName,
+    version: "1.0.0",
+    ...(envName === "Browser" && { browserName: "Chrome" }),
+  };
+
+  return env;
 }
