@@ -8,7 +8,9 @@ A lightweight, type-safe runtime environment detector for JavaScript/TypeScript 
 
 ## 🚀 Key Features
 
-- **Zero Dependencies**: No external dependencies for maximum reliability
+- **Environment Callbacks**: Execute code through environment-specific callback functions
+- **Return Values**: Callback functions can return values for further processing
+- **Zero Dependencies**: No external dependencies
 - **TypeScript Ready**: Full TypeScript support with type definitions included
 - **Lightweight**: Only ~7KB minified
 - **Universal Detection**: Supports Bun, Node.js, Deno, and Browser environments
@@ -299,7 +301,9 @@ JavaScript/TypeScript 애플리케이션을 위한 경량 런타임 환경 감�
 
 ## 🚀 주요 기능
 
-- **의존성 없음**: 외부 의존성이 전혀 없어 안정적
+- **환경별 콜백**: 환경별 콜백 함수를 통한 코드 실행 지원
+- **반환값 지원**: 콜백 함수에서 값을 반환하여 추가 처리 가능
+- **의존성 없음**: 외부 의존성이 없음
 - **TypeScript 지원**: 타입 정의가 포함된 완벽한 TypeScript 지원
 - **경량화**: 약 7KB (압축 시)
 - **다양한 환경 감지**: Bun, Node.js, Deno, 브라우저 환경 지원
