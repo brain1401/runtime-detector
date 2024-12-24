@@ -28,21 +28,30 @@ function getCurrentEnvironmentVariables(env: EnvironmentInfo) {
 const getTestFunctionExecuteInEnvironment =
   (condition: boolean, currentEnv: EnvironmentInfo) =>
   <T>(callback: SyncEnvironmentCallback<T>): T | undefined => {
-    const result = callback(currentEnv);
-    if (result instanceof Promise) {
-      throw new Error("callback must be a sync function");
+    if (condition) {
+      const result = callback(currentEnv);
+      if (result instanceof Promise) {
+        throw new Error("callback must be a sync function");
+      }
+      return result ?? undefined;
     }
-    return condition ? result : undefined;
+
+    return undefined;
   };
 
 const getTestFunctionExecuteInEnvironmentAsync =
   (condition: boolean, currentEnv: EnvironmentInfo) =>
   async <T>(callback: AsyncEnvironmentCallback<T>): Promise<T | undefined> => {
-    const result = callback(currentEnv);
-    if (!(result instanceof Promise)) {
-      throw new Error("callback must return a Promise");
+    if (condition) {
+      const result = callback(currentEnv);
+      if (!(result instanceof Promise)) {
+        throw new Error("callback must return a Promise");
+      }
+
+      return result ?? undefined;
     }
-    return condition ? await result : undefined;
+
+    return undefined;
   };
 
 function resetGlobalThis() {
