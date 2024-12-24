@@ -33,16 +33,6 @@ pnpm add runtime-detector
 bun add runtime-detector
 ```
 
-## 📋 Release Notes
-
-### 1.2.0
-
-- 🐛 **Bug Fix**: Fixed critical issue where `on*` functions could potentially execute in incorrect environments
-  - Previously, code within environment-specific functions could sometimes run in unintended environments
-  - Now strictly enforces environment checks before executing any code
-  - Affects all environment-specific functions (`onNodejs`, `onBrowser`, `onBun`, `onDeno`, etc.)
-
-
 ## 📝 Module Support
 
 runtime-detector supports both ESM (ECMAScript Modules) and CommonJS formats.
@@ -62,20 +52,23 @@ const { currentEnv, isNodejs } = require("runtime-detector");
 ```typescript
 import { currentEnv, isNodejs, isBrowser } from "runtime-detector";
 
-// Get current environment info
-const { name, version, browserName } = currentEnv;
+// Configuration setup example
+function setupConfig() {
+  const { name, version, browserName } = currentEnv;
+  
+  // Set environment-specific logging levels
+  const config = {
+    logLevel: isNodejs ? 'verbose' : 'error',
+    maxRetries: isBrowser ? 3 : 5,
+    timeout: isBrowser ? 5000 : 10000,
+    features: {
+      cache: isNodejs || browserName === 'Chrome',
+      analytics: isBrowser && browserName !== 'Firefox',
+      ssr: !isBrowser
+    }
+  };
 
-console.log(`Runtime: ${name} v${version}`);
-// Example output: "Runtime: Node.js v18.15.0"
-
-// Use boolean flags for conditional logic
-if (isNodejs) {
-  // Node.js specific code
-}
-
-if (isBrowser) {
-  // Browser specific code
-  console.log(`Browser: ${browserName}`); // e.g., "Chrome", "Firefox"
+  return config;
 }
 ```
 
@@ -84,65 +77,151 @@ if (isBrowser) {
 ```typescript
 import { onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
 
-// Node.js Environment
-onNodejs((env) => {
-  const fs = require('fs');
-  console.log(`Running in Node.js ${env.version}`);
-});
+// File handling across different environments
+function saveData(content: string) {
+  // Node.js: Use fs with proper error handling
+  onNodejs((env) => {
+    const fs = require('fs').promises;
+    return fs.writeFile('data.json', content)
+      .catch(err => console.error(`Failed to write file in Node.js ${env.version}:`, err));
+  });
 
-// Browser Environment
-onBrowser((env) => {
-  const element = document.querySelector('#app');
-  console.log(`Running in ${env.browserName} ${env.version}`);
-});
+  // Browser: Use localStorage with size check
+  onBrowser((env) => {
+    try {
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (content.length > maxSize) {
+        throw new Error('Content too large for localStorage');
+      }
+      localStorage.setItem('data', content);
+      console.log(`Data saved in ${env.browserName}`);
+    } catch (err) {
+      console.error('Storage failed:', err);
+    }
+  });
 
-// Bun Environment
-onBun((env) => {
-  const file = Bun.file('./data.txt');
-  console.log(`Running in Bun ${env.version}`);
-});
+  // Bun: Use fast native file API
+  onBun((env) => {
+    try {
+      Bun.write('data.json', content);
+      console.log(`File written using Bun ${env.version}`);
+    } catch (err) {
+      console.error('Bun write failed:', err);
+    }
+  });
 
-// Deno Environment
-onDeno((env) => {
-  const text = Deno.readTextFileSync('./data.txt');
-  console.log(`Running in Deno ${env.version}`);
-});
+  // Deno: Use native APIs with permissions
+  onDeno((env) => {
+    try {
+      Deno.writeTextFileSync('data.json', content);
+      console.log(`File written in Deno ${env.version}`);
+    } catch (err) {
+      console.error('Deno write failed:', err);
+    }
+  });
+}
 ```
 
-### Async Operations
+### Async Operations with Error Handling
 
 ```typescript
 import { onNodejsAsync, onBrowserAsync } from "runtime-detector";
 
-// Async Node.js Example
-await onNodejsAsync(async (env) => {
-  const response = await fetch('https://api.example.com/data');
-  const data = await response.json();
-  return data;
-});
+// API client with environment-specific optimizations
+class APIClient {
+  async fetchData(endpoint: string) {
+    // Browser: Use native fetch with timeout
+    const browserData = await onBrowserAsync(async (env) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      try {
+        const response = await fetch(endpoint, {
+          headers: {
+            'User-Agent': `WebApp/${env.browserName}`,
+            'Accept': 'application/json'
+          },
+          signal: controller.signal
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
+      } catch (err) {
+        console.error(`Browser fetch failed:`, err);
+        throw err;
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    });
 
-// Async Browser Example
-await onBrowserAsync(async (env) => {
-  const response = await fetch('/api/data');
-  const data = await response.json();
-  return data;
-});
+    // Node.js: Use axios with retries
+    const nodeData = await onNodejsAsync(async (env) => {
+      const axios = require('axios');
+      let retries = 3;
+      
+      while (retries > 0) {
+        try {
+          const response = await axios.get(endpoint, {
+            headers: {
+              'User-Agent': `NodeApp/${env.version}`,
+              'Accept': 'application/json'
+            },
+            timeout: 5000
+          });
+          return response.data;
+        } catch (err) {
+          retries--;
+          if (retries === 0) throw err;
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    });
+
+    return browserData || nodeData;
+  }
+}
 ```
 
-### Negative Conditions
+### Feature Detection and Optimization
 
 ```typescript
 import { onNotNodejs, onNotBrowser } from "runtime-detector";
 
-// Execute in any non-Node.js environment
-onNotNodejs((env) => {
-  console.log(`Running in ${env.name} (not Node.js)`);
-});
+// Cache system optimization example
+function setupCache(data: any) {
+  // Use Redis in server environments
+  onNotBrowser(async (env) => {
+    const Redis = require('redis');
+    const client = Redis.createClient();
+    
+    try {
+      await client.connect();
+      await client.set('app:cache', JSON.stringify(data));
+      console.log(`Redis cache setup in ${env.name}`);
+    } catch (err) {
+      console.error(`Cache setup failed in ${env.name}:`, err);
+      // Fallback to in-memory cache
+      global.__cache = data;
+    }
+  });
 
-// Execute in any non-Browser environment
-onNotBrowser((env) => {
-  console.log(`Running in ${env.name} (not Browser)`);
-});
+  // Use IndexedDB in browser
+  onBrowser((env) => {
+    const request = indexedDB.open('appCache', 1);
+    
+    request.onerror = () => {
+      console.error(`IndexedDB failed in ${env.browserName}`);
+      // Fallback to sessionStorage
+      sessionStorage.setItem('cache', JSON.stringify(data));
+    };
+
+    request.onsuccess = (event: any) => {
+      const db = event.target.result;
+      const tx = db.transaction('cache', 'readwrite');
+      tx.objectStore('cache').put(data, 'appData');
+    };
+  });
+}
 ```
 
 ## 📚 API Reference
@@ -191,6 +270,15 @@ import {
 | `onNotBunAsync(callback)`     | Async execute in non-Bun     |
 | `onNotDenoAsync(callback)`    | Async execute in non-Deno    |
 
+## 📋 Release Notes
+
+### 1.2.0
+
+- 🐛 **Bug Fix**: Fixed critical issue where `on*` functions could potentially execute in incorrect environments
+  - Previously, code within environment-specific functions could sometimes run in unintended environments
+  - Now strictly enforces environment checks before executing any code
+  - Affects all environment-specific functions (`onNodejs`, `onBrowser`, `onBun`, `onDeno`, etc.)
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -235,16 +323,6 @@ pnpm add runtime-detector
 # bun 사용
 bun add runtime-detector
 ```
-
-## 📋 릴리스 노트
-
-### 1.2.0
-
-- 🐛 **버그 수정**: `on*` 함수들이 잘못된 환경에서 실행될 수 있는 중요한 문제 해결
-  - 이전에는 환경별 함수 내의 코드가 의도하지 않은 환경에서 실행될 수 있었음
-  - 이제 코드 실행 전에 환경 검사를 엄격하게 수행
-  - 모든 환경별 함수에 적용 (`onNodejs`, `onBrowser`, `onBun`, `onDeno` 등)
-
 
 ## 📝 모듈 지원
 
@@ -332,7 +410,6 @@ function saveData(content: string) {
       console.error('Deno 쓰기 실패:', err);
     }
   });
-}
 ```
 
 ### 오류 처리를 포함한 비동기 작업
@@ -437,24 +514,6 @@ function setupCache(data: any) {
 }
 ```
 
-### 오류 처리를 포함한 비동기 작업
-
-```typescript
-import { onNodejsAsync, onBrowserAsync } from "runtime-detector";
-
-// 환경별 최적화된 API 클라이언트
-class APIClient {
-  async fetchData(endpoint: string) {
-    // 브라우저: 타임아웃이 있는 네이티브 fetch 사용
-    const browserData = await onBrowserAsync(async (env) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
-      try {
-        const response = await fetch(endpoint, {
-          headers: {
-            'User-Agent': `WebApp/${env.browserName}
-
 ## 📚 API 레퍼런스
 
 ### 환경 정보
@@ -500,6 +559,15 @@ import {
 | `onNotNodejsAsync(callback)`  | Node.js가 아닌 환경에서 비동기 실행  |
 | `onNotBunAsync(callback)`     | Bun이 아닌 환경에서 비동기 실행      |
 | `onNotDenoAsync(callback)`    | Deno가 아닌 환경에서 비동기 실행     |
+
+## 📋 릴리스 노트
+
+### 1.2.0
+
+- 🐛 **버그 수정**: `on*` 함수들이 잘못된 환경에서 실행될 수 있는 중요한 문제 해결
+  - 이전에는 환경별 함수 내의 코드가 의도하지 않은 환경에서 실행될 수 있었음
+  - 이제 코드 실행 전에 환경 검사를 엄격하게 수행
+  - 모든 환경별 함수에 적용 (`onNodejs`, `onBrowser`, `onBun`, `onDeno` 등)
 
 ## 🤝 기여하기
 
