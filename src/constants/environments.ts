@@ -1,11 +1,29 @@
+/**
+ * @fileoverview Environment Detection Configuration
+ * 
+ * This file contains the configuration for detecting different runtime environments
+ * including Browser, Node.js, Bun, and Deno. Each environment has specific detection
+ * logic and version retrieval methods.
+ */
+
 import { EnvironmentMap } from "../types";
 import { getBrowserVersion } from "../utils/version";
 
 /**
- * Map of supported environments with their detection and version retrieval logic
+ * Map of supported environments with their detection and version retrieval logic.
+ * Each environment is configured with detection methods and version retrieval functions.
+ * The order of environments in this map determines detection priority.
  *
- * @constant
- * @type {EnvironmentMap}
+ * @constant {EnvironmentMap}
+ * 
+ * @example
+ * ```typescript
+ * // Access specific environment configuration
+ * const nodeEnv = environments.Nodejs;
+ * if (nodeEnv.detect()) {
+ *   console.log(`Node.js version: ${nodeEnv.getVersion()}`);
+ * }
+ * ```
  */
 export const environments: EnvironmentMap = {
   /**

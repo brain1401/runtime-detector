@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
     // ECMAScript 대상 버전 설정
-    "target": "ES2016",
+    "target": "ES2017",
     "module": "ESNext",
-    "lib": ["ES2016", "DOM", "DOM.Iterable"],
+    "lib": ["ES2017", "DOM", "DOM.Iterable"],
 
     // 모듈 해석 및 출력 설정
     "moduleResolution": "node",

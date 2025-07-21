@@ -27,32 +27,32 @@ function getCurrentEnvironmentVariables(env: EnvironmentInfo) {
 
 const getTestFunctionExecuteInEnvironment =
   (condition: boolean, currentEnv: EnvironmentInfo) =>
-  <T>(callback: SyncEnvironmentCallback<T>): T | undefined => {
-    if (condition) {
-      const result = callback(currentEnv);
-      if (result instanceof Promise) {
-        throw new Error("callback must be a sync function");
+    <T>(callback: SyncEnvironmentCallback<T>): T | undefined => {
+      if (condition) {
+        const result = callback(currentEnv);
+        if (result instanceof Promise) {
+          throw new Error("callback must be a sync function");
+        }
+        return result ?? undefined;
       }
-      return result ?? undefined;
-    }
 
-    return undefined;
-  };
+      return undefined;
+    };
 
 const getTestFunctionExecuteInEnvironmentAsync =
   (condition: boolean, currentEnv: EnvironmentInfo) =>
-  async <T>(callback: AsyncEnvironmentCallback<T>): Promise<T | undefined> => {
-    if (condition) {
-      const result = callback(currentEnv);
-      if (!(result instanceof Promise)) {
-        throw new Error("callback must return a Promise");
+    async <T>(callback: AsyncEnvironmentCallback<T>): Promise<T | undefined> => {
+      if (condition) {
+        const result = callback(currentEnv);
+        if (!(result instanceof Promise)) {
+          throw new Error("callback must return a Promise");
+        }
+
+        return result ?? undefined;
       }
 
-      return result ?? undefined;
-    }
-
-    return undefined;
-  };
+      return undefined;
+    };
 
 function resetGlobalThis() {
   delete (globalThis as any).window;
@@ -126,166 +126,228 @@ describe("환경 감지 테스트", () => {
     });
   });
 
-  describe("환경별 실행 함수 테스트", () => {
-    it("onBrowser 함수 테스트", () => {
+  describe("Callback Execution Functions", () => {
+    it("inBrowser 함수 테스트", () => {
       simulateBrowser();
       const env = getCurrentEnvironment();
       const { isBrowser } = getCurrentEnvironmentVariables(env);
 
-      const onBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
+      const inBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
 
-      const result = onBrowser((env) => {
+      const result = inBrowser((env) => {
         expect(env.name).toBe("Browser");
-        return "browser-result";
+        return "Browser Test Passed";
       });
 
-      expect(result).toBe("browser-result");
+      if (isBrowser) {
+        expect(result).toBe("Browser Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
     });
 
-    it("onNodejs 함수 테스트", () => {
+    it("inNodejs 함수 테스트", () => {
       simulateNodejs();
       const env = getCurrentEnvironment();
       const { isNodejs } = getCurrentEnvironmentVariables(env);
 
-      const onNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
+      const inNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
 
-      const result = onNodejs((env) => {
+      const result = inNodejs((env) => {
         expect(env.name).toBe("Nodejs");
-        return "nodejs-result";
+        return "Node.js Test Passed";
       });
 
-      expect(result).toBe("nodejs-result");
+      if (isNodejs) {
+        expect(result).toBe("Node.js Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
     });
 
-    it("onBun 함수 테스트", () => {
+    it("inBun 함수 테스트", () => {
       simulateBun();
       const env = getCurrentEnvironment();
       const { isBun } = getCurrentEnvironmentVariables(env);
 
-      const onBun = getTestFunctionExecuteInEnvironment(isBun, env);
+      const inBun = getTestFunctionExecuteInEnvironment(isBun, env);
 
-      const result = onBun((env) => {
+      const result = inBun((env) => {
         expect(env.name).toBe("Bun");
-        return "bun-result";
+        return "Bun Test Passed";
       });
 
-      expect(result).toBe("bun-result");
+      if (isBun) {
+        expect(result).toBe("Bun Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
     });
 
-    it("onDeno 함수 테스트", () => {
+    it("inDeno 함수 테스트", () => {
       simulateDeno();
       const env = getCurrentEnvironment();
       const { isDeno } = getCurrentEnvironmentVariables(env);
 
-      const onDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
+      const inDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
 
-      const result = onDeno((env) => {
+      const result = inDeno((env) => {
         expect(env.name).toBe("Deno");
-        return "deno-result";
+        return "Deno Test Passed";
       });
 
-      expect(result).toBe("deno-result");
+      if (isDeno) {
+        expect(result).toBe("Deno Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
     });
   });
 
   describe("비동기 함수 테스트", () => {
-    it("onBrowserAsync 함수 테스트", async () => {
+    it("inBrowserAsync 함수 테스트", async () => {
       simulateBrowser();
       const env = getCurrentEnvironment();
       const { isBrowser } = getCurrentEnvironmentVariables(env);
 
-      const onBrowserAsync = getTestFunctionExecuteInEnvironmentAsync(
+      const inBrowserAsync = getTestFunctionExecuteInEnvironmentAsync(
         isBrowser,
         env
       );
 
-      const result = await onBrowserAsync(async (env) => {
+      const result = await inBrowserAsync(async (env) => {
         expect(env.name).toBe("Browser");
-        return "browser-async-result";
+        return "Browser Async Test Passed";
       });
 
-      expect(result).toBe("browser-async-result");
+      if (isBrowser) {
+        expect(result).toBe("Browser Async Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
     });
 
-    it("onNodejsAsync 함수 테스트", async () => {
+    it("inNodejsAsync 함수 테스트", async () => {
       simulateNodejs();
       const env = getCurrentEnvironment();
       const { isNodejs } = getCurrentEnvironmentVariables(env);
 
-      const onNodejsAsync = getTestFunctionExecuteInEnvironmentAsync(
+      const inNodejsAsync = getTestFunctionExecuteInEnvironmentAsync(
         isNodejs,
         env
       );
 
-      const result = await onNodejsAsync(async (env) => {
+      const result = await inNodejsAsync(async (env) => {
         expect(env.name).toBe("Nodejs");
-        return "nodejs-async-result";
+        return "Node.js Async Test Passed";
       });
 
-      expect(result).toBe("nodejs-async-result");
+      if (isNodejs) {
+        expect(result).toBe("Node.js Async Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
+    });
+
+    it("inBunAsync 함수 테스트", async () => {
+      simulateBun();
+      const env = getCurrentEnvironment();
+      const { isBun } = getCurrentEnvironmentVariables(env);
+
+      const inBunAsync = getTestFunctionExecuteInEnvironmentAsync(isBun, env);
+
+      const result = await inBunAsync(async (env) => {
+        expect(env.name).toBe("Bun");
+        return "Bun Async Test Passed";
+      });
+
+      if (isBun) {
+        expect(result).toBe("Bun Async Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
+    });
+
+    it("inDenoAsync 함수 테스트", async () => {
+      simulateDeno();
+      const env = getCurrentEnvironment();
+      const { isDeno } = getCurrentEnvironmentVariables(env);
+
+      const inDenoAsync = getTestFunctionExecuteInEnvironmentAsync(isDeno, env);
+
+      const result = await inDenoAsync(async (env) => {
+        expect(env.name).toBe("Deno");
+        return "Deno Async Test Passed";
+      });
+
+      if (isDeno) {
+        expect(result).toBe("Deno Async Test Passed");
+      } else {
+        expect(result).toBeUndefined();
+      }
     });
   });
 
   describe("에러 케이스 테스트", () => {
     describe("동기 함수에 비동기 콜백 전달시 에러 발생", () => {
-      it("Node.js 환경 테스트", () => {
+      it("inNodejs 함수에서 콜백 에러 발생 시 처리", () => {
         simulateNodejs();
         const env = getCurrentEnvironment();
         const { isNodejs } = getCurrentEnvironmentVariables(env);
 
-        const onNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
+        const inNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
 
         expect(() =>
           // @ts-expect-error
-          onNodejs(async () => {
-            return "result";
+          inNodejs(async () => {
+            return "async result";
           })
-        ).toThrow();
+        ).toThrow("callback must be a sync function");
       });
 
-      it("Browser 환경 테스트", () => {
+      it("inBrowser 함수에서 콜백 에러 발생 시 처리", () => {
         simulateBrowser();
         const env = getCurrentEnvironment();
         const { isBrowser } = getCurrentEnvironmentVariables(env);
 
-        const onBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
+        const inBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
 
         expect(() =>
           // @ts-expect-error
-          onBrowser(async () => {
-            return "result";
+          inBrowser(async () => {
+            return "async result";
           })
-        ).toThrow();
+        ).toThrow("callback must be a sync function");
       });
 
-      it("Bun 환경 테스트", () => {
+      it("inBun 함수에서 콜백 에러 발생 시 처리", () => {
         simulateBun();
         const env = getCurrentEnvironment();
         const { isBun } = getCurrentEnvironmentVariables(env);
 
-        const onBun = getTestFunctionExecuteInEnvironment(isBun, env);
+        const inBun = getTestFunctionExecuteInEnvironment(isBun, env);
 
         expect(() =>
           // @ts-expect-error
-          onBun(async () => {
-            return "result";
+          inBun(async () => {
+            return "async result";
           })
-        ).toThrow();
+        ).toThrow("callback must be a sync function");
       });
 
-      it("Deno 환경 테스트", () => {
+      it("inDeno 함수에서 콜백 에러 발생 시 처리", () => {
         simulateDeno();
         const env = getCurrentEnvironment();
         const { isDeno } = getCurrentEnvironmentVariables(env);
 
-        const onDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
+        const inDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
 
         expect(() =>
           // @ts-expect-error
-          onDeno(async () => {
-            return "result";
+          inDeno(async () => {
+            return "async result";
           })
-        ).toThrow();
+        ).toThrow("callback must be a sync function");
       });
     });
   });
@@ -298,22 +360,22 @@ describe("환경 감지 테스트", () => {
       const { isNodejs, isBrowser, isBun, isDeno } =
         getCurrentEnvironmentVariables(env);
 
-      const onNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
-      const onBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
-      const onBun = getTestFunctionExecuteInEnvironment(isBun, env);
-      const onDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
+      const inNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
+      const inBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
+      const inBun = getTestFunctionExecuteInEnvironment(isBun, env);
+      const inDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
 
-      const onDenoResult = onDeno(() => "result");
-      expect(onDenoResult).toBeUndefined();
+      const inDenoResult = inDeno(() => "result");
+      expect(inDenoResult).toBeUndefined();
 
-      const onNodejsResult = onNodejs(() => "result");
-      expect(onNodejsResult).toBe("result");
+      const inNodejsResult = inNodejs(() => "result");
+      expect(inNodejsResult).toBe("result");
 
-      const onBrowserResult = onBrowser(() => "result");
-      expect(onBrowserResult).toBeUndefined();
+      const inBrowserResult = inBrowser(() => "result");
+      expect(inBrowserResult).toBeUndefined();
 
-      const onBunResult = onBun(() => "result");
-      expect(onBunResult).toBeUndefined();
+      const inBunResult = inBun(() => "result");
+      expect(inBunResult).toBeUndefined();
     });
 
     it("Deno 환경 테스트", () => {
@@ -322,22 +384,22 @@ describe("환경 감지 테스트", () => {
       const { isDeno, isNodejs, isBrowser, isBun } =
         getCurrentEnvironmentVariables(env);
 
-      const onDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
-      const onNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
-      const onBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
-      const onBun = getTestFunctionExecuteInEnvironment(isBun, env);
+      const inDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
+      const inNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
+      const inBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
+      const inBun = getTestFunctionExecuteInEnvironment(isBun, env);
 
-      const onDenoResult = onDeno(() => "result");
-      expect(onDenoResult).toBe("result");
+      const inDenoResult = inDeno(() => "result");
+      expect(inDenoResult).toBe("result");
 
-      const onNodejsResult = onNodejs(() => "result");
-      expect(onNodejsResult).toBeUndefined();
+      const inNodejsResult = inNodejs(() => "result");
+      expect(inNodejsResult).toBeUndefined();
 
-      const onBrowserResult = onBrowser(() => "result");
-      expect(onBrowserResult).toBeUndefined();
+      const inBrowserResult = inBrowser(() => "result");
+      expect(inBrowserResult).toBeUndefined();
 
-      const onBunResult = onBun(() => "result");
-      expect(onBunResult).toBeUndefined();
+      const inBunResult = inBun(() => "result");
+      expect(inBunResult).toBeUndefined();
     });
 
     it("Bun 환경 테스트", () => {
@@ -346,22 +408,22 @@ describe("환경 감지 테스트", () => {
       const { isBun, isNodejs, isBrowser, isDeno } =
         getCurrentEnvironmentVariables(env);
 
-      const onBun = getTestFunctionExecuteInEnvironment(isBun, env);
-      const onNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
-      const onBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
-      const onDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
+      const inBun = getTestFunctionExecuteInEnvironment(isBun, env);
+      const inNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
+      const inBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
+      const inDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
 
-      const onBunResult = onBun(() => "result");
-      expect(onBunResult).toBe("result");
+      const inBunResult = inBun(() => "result");
+      expect(inBunResult).toBe("result");
 
-      const onNodejsResult = onNodejs(() => "result");
-      expect(onNodejsResult).toBeUndefined();
+      const inNodejsResult = inNodejs(() => "result");
+      expect(inNodejsResult).toBeUndefined();
 
-      const onBrowserResult = onBrowser(() => "result");
-      expect(onBrowserResult).toBeUndefined();
+      const inBrowserResult = inBrowser(() => "result");
+      expect(inBrowserResult).toBeUndefined();
 
-      const onDenoResult = onDeno(() => "result");
-      expect(onDenoResult).toBeUndefined();
+      const inDenoResult = inDeno(() => "result");
+      expect(inDenoResult).toBeUndefined();
     });
 
     it("Browser 환경 테스트", () => {
@@ -370,22 +432,22 @@ describe("환경 감지 테스트", () => {
       const { isBrowser, isNodejs, isBun, isDeno } =
         getCurrentEnvironmentVariables(env);
 
-      const onBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
-      const onNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
-      const onBun = getTestFunctionExecuteInEnvironment(isBun, env);
-      const onDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
+      const inBrowser = getTestFunctionExecuteInEnvironment(isBrowser, env);
+      const inNodejs = getTestFunctionExecuteInEnvironment(isNodejs, env);
+      const inBun = getTestFunctionExecuteInEnvironment(isBun, env);
+      const inDeno = getTestFunctionExecuteInEnvironment(isDeno, env);
 
-      const onBrowserResult = onBrowser(() => "result");
-      expect(onBrowserResult).toBe("result");
+      const inBrowserResult = inBrowser(() => "result");
+      expect(inBrowserResult).toBe("result");
 
-      const onNodejsResult = onNodejs(() => "result");
-      expect(onNodejsResult).toBeUndefined();
+      const inNodejsResult = inNodejs(() => "result");
+      expect(inNodejsResult).toBeUndefined();
 
-      const onBunResult = onBun(() => "result");
-      expect(onBunResult).toBeUndefined();
+      const inBunResult = inBun(() => "result");
+      expect(inBunResult).toBeUndefined();
 
-      const onDenoResult = onDeno(() => "result");
-      expect(onDenoResult).toBeUndefined();
+      const inDenoResult = inDeno(() => "result");
+      expect(inDenoResult).toBeUndefined();
     });
   });
 

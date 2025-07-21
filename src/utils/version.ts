@@ -1,14 +1,28 @@
 import { EnvironmentInfo, EnvironmentName } from "../types";
 
+/**
+ * Information about a browser including its name and version
+ * 
+ * @typedef {Object} BrowserInfo
+ * @property {string} name - The name of the browser (e.g., 'Chrome', 'Firefox', 'Safari', 'Edge', 'Unknown')
+ * @property {string} version - The version string of the browser, or 'unknown' if not detectable
+ */
 type BrowserInfo = {
   name: string;
   version: string;
 };
 
 /**
- * Extract browser version from user agent string
+ * Extract browser name and version from user agent string
  *
- * @returns {string} Browser version or 'unknown' if detection fails
+ * @returns {BrowserInfo} Object containing browser name and version, or 'Unknown'/'unknown' if detection fails
+ * 
+ * @example
+ * ```typescript
+ * const browserInfo = getBrowserVersion();
+ * console.log(`${browserInfo.name} v${browserInfo.version}`);
+ * // Output: "Chrome v91.0.4472.124"
+ * ```
  */
 export function getBrowserVersion(): BrowserInfo {
   const userAgent = navigator.userAgent || "";
@@ -36,6 +50,21 @@ export function getBrowserVersion(): BrowserInfo {
   return { name: "Unknown", version: "unknown" };
 }
 
+/**
+ * Creates a simulated environment info object for testing purposes
+ *
+ * @param {EnvironmentName} envName - The name of the environment to simulate
+ * @returns {EnvironmentInfo} A simulated environment info object with default values
+ * 
+ * @example
+ * ```typescript
+ * const mockBrowserEnv = simulateEnvironmentInfo('Browser');
+ * console.log(mockBrowserEnv);
+ * // Output: { name: 'Browser', version: '1.0.0', browserName: 'Chrome' }
+ * ```
+ * 
+ * @internal This function is primarily intended for internal testing
+ */
 export function simulateEnvironmentInfo(
   envName: EnvironmentName
 ): EnvironmentInfo {

@@ -1,4 +1,11 @@
 /**
+ * @fileoverview Type Definitions for Runtime Detector
+ * 
+ * This file contains all TypeScript type definitions used throughout the runtime-detector library.
+ * It defines interfaces for environment information, callback functions, and detection configurations.
+ */
+
+/**
  * Represents the names of supported runtime environments.
  *
  * @typedef {("Browser"|"Nodejs"|"Bun"|"Deno"|"Unknown")} EnvironmentName

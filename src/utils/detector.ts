@@ -15,10 +15,13 @@ import { environments } from "../constants/environments";
  * - browserName: The name of the detected browser (only available in Browser environment)
  *
  * @example
+ * ```typescript
  * const env = getCurrentEnvironment();
  * console.log(env);
  * // Output: { name: 'Nodejs', version: 'v16.14.0', browserName: undefined }
- * not exported
+ * ```
+ * 
+ * @public This function is available for direct use but typically not needed as other utilities use it internally
  */
 export function getCurrentEnvironment(): EnvironmentInfo {
   for (const env of Object.values(environments)) {
@@ -43,10 +46,21 @@ export function getCurrentEnvironment(): EnvironmentInfo {
 }
 
 /**
- * the current environment information.
- * @type {EnvironmentInfo}
- *
- *
+ * The current environment information detected at module initialization.
+ * This constant is determined once when the module is loaded and provides
+ * immediate access to the runtime environment details.
+ * 
+ * @constant {EnvironmentInfo}
+ * 
+ * @example
+ * ```typescript
+ * import { currentEnv } from 'runtime-detector';
+ * 
+ * console.log(`Running in ${currentEnv.name} v${currentEnv.version}`);
+ * if (currentEnv.browserName) {
+ *   console.log(`Browser: ${currentEnv.browserName}`);
+ * }
+ * ```
  */
 export const currentEnv: EnvironmentInfo = getCurrentEnvironment();
 
@@ -170,20 +184,45 @@ export const isNotBun: boolean = !isBun;
  */
 export const isNotDeno: boolean = !isDeno;
 
+/**
+ * Creates a higher-order function for conditional asynchronous execution based on environment conditions.
+ * This factory function returns an async executor that only runs the provided callback if the condition is met.
+ *
+ * @param {boolean} condition - The condition that determines whether the callback should execute
+ * @returns {Function} An async function that conditionally executes the provided callback
+ * 
+ * @template T The return type of the callback function
+ * @param {AsyncEnvironmentCallback<T>} callback - The async callback to execute conditionally
+ * @returns {Promise<T | undefined>} A promise that resolves to the callback result or undefined
+ * 
+ * @throws {Error} Throws an error if the callback does not return a Promise
+ * 
+ * @example
+ * ```typescript
+ * const executeInBrowser = getFunctionExecuteInEnvironmentAsync(isBrowser);
+ * 
+ * const result = await executeInBrowser(async (env) => {
+ *   const response = await fetch('/api/data');
+ *   return response.json();
+ * });
+ * ```
+ * 
+ * @internal This is a factory function used internally to create environment-specific executors
+ */
 export const getFunctionExecuteInEnvironmentAsync =
   (condition: boolean) =>
-  async <T>(callback: AsyncEnvironmentCallback<T>): Promise<T | undefined> => {
-    if (condition) {
-      const result = callback(currentEnv);
-      if (!(result instanceof Promise)) {
-        throw new Error("callback must return a Promise");
+    async <T>(callback: AsyncEnvironmentCallback<T>): Promise<T | undefined> => {
+      if (condition) {
+        const result = callback(currentEnv);
+        if (!(result instanceof Promise)) {
+          throw new Error("callback must return a Promise");
+        }
+
+        return result ?? undefined;
       }
 
-      return result ?? undefined;
-    }
-
-    return undefined;
-  };
+      return undefined;
+    };
 
 /**
  * onBrowserAsync is a function that executes a callback in the browser environment asynchronously.
@@ -206,7 +245,7 @@ export const getFunctionExecuteInEnvironmentAsync =
  * console.log(result); // Output: "Browser" or undefined
  */
 
-export const onBrowserAsync = getFunctionExecuteInEnvironmentAsync(isBrowser);
+export const inBrowserAsync = getFunctionExecuteInEnvironmentAsync(isBrowser);
 
 /**
  * onNodejsAsync is a function that executes a callback in the Node.js environment asynchronously.
@@ -228,7 +267,7 @@ export const onBrowserAsync = getFunctionExecuteInEnvironmentAsync(isBrowser);
  * });
  * console.log(result); // Output: "Nodejs" or undefined
  */
-export const onNodejsAsync = getFunctionExecuteInEnvironmentAsync(isNodejs);
+export const inNodejsAsync = getFunctionExecuteInEnvironmentAsync(isNodejs);
 
 /**
  * onBunAsync is a function that executes a callback in the Bun environment asynchronously.
@@ -250,7 +289,7 @@ export const onNodejsAsync = getFunctionExecuteInEnvironmentAsync(isNodejs);
  * });
  * console.log(result); // Output: "Bun" or undefined
  */
-export const onBunAsync = getFunctionExecuteInEnvironmentAsync(isBun);
+export const inBunAsync = getFunctionExecuteInEnvironmentAsync(isBun);
 
 /**
  * onDenoAsync is a function that executes a callback in the Deno environment asynchronously.
@@ -261,20 +300,18 @@ export const onBunAsync = getFunctionExecuteInEnvironmentAsync(isBun);
  * @returns {Promise<T | undefined>} A promise that resolves to the result of the callback or undefined.
  *
  * @example
-* // without return value
- * onDenoAsync((env) => {
+ * // without return value
+ * inDenoAsync(async (env) => {
  *   console.log(env.name);
  * });
  * 
  * // with return value
- * const result = await onDenoAsync((env) => {
+ * const result = await inDenoAsync(async (env) => {
  *   return env.name;
  * });
  * console.log(result); // Output: "Deno" or undefined
- *
-
  */
-export const onDenoAsync = getFunctionExecuteInEnvironmentAsync(isDeno);
+export const inDenoAsync = getFunctionExecuteInEnvironmentAsync(isDeno);
 
 /**
  * onNotBrowserAsync is a function that executes a callback in the non-browser environment asynchronously.
@@ -396,19 +433,44 @@ export const onUnknownAsync = getFunctionExecuteInEnvironmentAsync(
   currentEnv.name === "Unknown"
 );
 
+/**
+ * Creates a higher-order function for conditional synchronous execution based on environment conditions.
+ * This factory function returns a sync executor that only runs the provided callback if the condition is met.
+ *
+ * @param {boolean} condition - The condition that determines whether the callback should execute
+ * @returns {Function} A function that conditionally executes the provided callback synchronously
+ * 
+ * @template T The return type of the callback function
+ * @param {SyncEnvironmentCallback<T>} callback - The sync callback to execute conditionally
+ * @returns {T | undefined} The callback result or undefined if condition is not met
+ * 
+ * @throws {Error} Throws an error if the callback returns a Promise (async function)
+ * 
+ * @example
+ * ```typescript
+ * const executeInNodejs = getFunctionExecuteInEnvironment(isNodejs);
+ * 
+ * const result = executeInNodejs((env) => {
+ *   const fs = require('fs');
+ *   return fs.existsSync('./package.json');
+ * });
+ * ```
+ * 
+ * @internal This is a factory function used internally to create environment-specific executors
+ */
 export const getFunctionExecuteInEnvironment =
   (condition: boolean) =>
-  <T>(callback: SyncEnvironmentCallback<T>): T | undefined => {
-    if (condition) {
-      const result = callback(currentEnv);
-      if (result instanceof Promise) {
-        throw new Error("callback must be a sync function");
+    <T>(callback: SyncEnvironmentCallback<T>): T | undefined => {
+      if (condition) {
+        const result = callback(currentEnv);
+        if (result instanceof Promise) {
+          throw new Error("callback must be a sync function");
+        }
+        return result ?? undefined;
       }
-      return result ?? undefined;
-    }
 
-    return undefined;
-  };
+      return undefined;
+    };
 
 /**
  * onBrowser is a function that executes a callback in the browser environment synchronously.
@@ -429,7 +491,7 @@ export const getFunctionExecuteInEnvironment =
  * });
  * console.log(result); // Output: "Browser" or undefined
  */
-export const onBrowser = getFunctionExecuteInEnvironment(isBrowser);
+export const inBrowser = getFunctionExecuteInEnvironment(isBrowser);
 
 /**
  * onNodejs is a function that executes a callback in the Node.js environment synchronously.
@@ -450,7 +512,7 @@ export const onBrowser = getFunctionExecuteInEnvironment(isBrowser);
  * });
  * console.log(result); // Output: "Nodejs" or undefined
  */
-export const onNodejs = getFunctionExecuteInEnvironment(isNodejs);
+export const inNodejs = getFunctionExecuteInEnvironment(isNodejs);
 
 /**
  * onBun is a function that executes a callback in the Bun environment synchronously.
@@ -471,7 +533,7 @@ export const onNodejs = getFunctionExecuteInEnvironment(isNodejs);
  * });
  * console.log(result); // Output: "Bun" or undefined
  */
-export const onBun = getFunctionExecuteInEnvironment(isBun);
+export const inBun = getFunctionExecuteInEnvironment(isBun);
 
 /**
  * onDeno is a function that executes a callback in the Deno environment synchronously.
@@ -492,7 +554,7 @@ export const onBun = getFunctionExecuteInEnvironment(isBun);
  * });
  * console.log(result); // Output: "Deno" or undefined
  */
-export const onDeno = getFunctionExecuteInEnvironment(isDeno);
+export const inDeno = getFunctionExecuteInEnvironment(isDeno);
 
 /**
  * onNotBrowser is a function that executes a callback in the non-browser environment synchronously.
@@ -609,3 +671,95 @@ export const onNotDeno = getFunctionExecuteInEnvironment(
 export const onUnknown = getFunctionExecuteInEnvironment(
   currentEnv.name === "Unknown"
 );
+
+/**
+ * A boolean indicating whether the current environment is unknown.
+ * This will be true when the runtime environment cannot be detected or identified.
+ * 
+ * @constant {boolean}
+ * 
+ * @example
+ * ```typescript
+ * import { isUnknown } from 'runtime-detector';
+ * 
+ * if (isUnknown) {
+ *   console.log('Running in an unrecognized environment');
+ *   // Fallback logic for unknown environments
+ * }
+ * ```
+ */
+export const isUnknown: boolean = currentEnv.name === "Unknown";
+
+/**
+ * A boolean indicating whether the current environment is not unknown.
+ * This will be true when the runtime environment has been successfully detected and identified.
+ * 
+ * @constant {boolean}
+ * 
+ * @example
+ * ```typescript
+ * import { isNotUnknown } from 'runtime-detector';
+ * 
+ * if (isNotUnknown) {
+ *   console.log('Running in a known, supported environment');
+ *   // Environment-specific logic can be safely applied
+ * }
+ * ```
+ */
+export const isNotUnknown: boolean = !isUnknown;
+
+/**
+ * @deprecated Use `inBrowser` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inBrowser} for the preferred function
+ */
+export const onBrowser = inBrowser;
+
+/**
+ * @deprecated Use `inNodejs` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inNodejs} for the preferred function
+ */
+export const onNodejs = inNodejs;
+
+/**
+ * @deprecated Use `inBun` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inBun} for the preferred function
+ */
+export const onBun = inBun;
+
+/**
+ * @deprecated Use `inDeno` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inDeno} for the preferred function
+ */
+export const onDeno = inDeno;
+
+/**
+ * @deprecated Use `inBrowserAsync` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inBrowserAsync} for the preferred function
+ */
+export const onBrowserAsync = inBrowserAsync;
+
+/**
+ * @deprecated Use `inNodejsAsync` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inNodejsAsync} for the preferred function
+ */
+export const onNodejsAsync = inNodejsAsync;
+
+/**
+ * @deprecated Use `inBunAsync` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inBunAsync} for the preferred function
+ */
+export const onBunAsync = inBunAsync;
+
+/**
+ * @deprecated Use `inDenoAsync` instead. This alias will be removed in a future version.
+ * 
+ * @see {@link inDenoAsync} for the preferred function
+ */
+export const onDenoAsync = inDenoAsync;

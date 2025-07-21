@@ -12,7 +12,7 @@ A lightweight, type-safe runtime environment detector for JavaScript/TypeScript 
 - **Return Values**: Callback functions can return values for further processing
 - **Zero Dependencies**: No external dependencies
 - **TypeScript Ready**: Full TypeScript support with type definitions included
-- **Lightweight**: Only ~7KB minified
+- **Lightweight**: Only ~1.1KB minzipped
 - **Universal Detection**: Supports Bun, Node.js, Deno, and Browser environments
 - **Flexible API**: Both synchronous and asynchronous operations
 - **Type Safety**: Environment-specific code execution with TypeScript type checking
@@ -77,19 +77,19 @@ function setupConfig() {
 ### Environment-Specific Code Execution
 
 ```typescript
-import { onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
+import { inNodejs, inBrowser, inBun, inDeno } from "runtime-detector";
 
 // File handling across different environments
 function saveData(content: string) {
   // Node.js: Use fs with proper error handling
-  onNodejs((env) => {
+  inNodejs((env) => {
     const fs = require('fs').promises;
     return fs.writeFile('data.json', content)
       .catch(err => console.error(`Failed to write file in Node.js ${env.version}:`, err));
   });
 
   // Browser: Use localStorage with size check
-  onBrowser((env) => {
+  inBrowser((env) => {
     try {
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (content.length > maxSize) {
@@ -103,7 +103,7 @@ function saveData(content: string) {
   });
 
   // Bun: Use fast native file API
-  onBun((env) => {
+  inBun((env) => {
     try {
       Bun.write('data.json', content);
       console.log(`File written using Bun ${env.version}`);
@@ -113,7 +113,7 @@ function saveData(content: string) {
   });
 
   // Deno: Use native APIs with permissions
-  onDeno((env) => {
+  inDeno((env) => {
     try {
       Deno.writeTextFileSync('data.json', content);
       console.log(`File written in Deno ${env.version}`);
@@ -127,13 +127,13 @@ function saveData(content: string) {
 ### Async Operations with Error Handling
 
 ```typescript
-import { onNodejsAsync, onBrowserAsync } from "runtime-detector";
+import { inNodejsAsync, inBrowserAsync } from "runtime-detector";
 
 // API client with environment-specific optimizations
 class APIClient {
   async fetchData(endpoint: string) {
     // Browser: Use native fetch with timeout
-    const browserData = await onBrowserAsync(async (env) => {
+    const browserData = await inBrowserAsync(async (env) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
@@ -157,7 +157,7 @@ class APIClient {
     });
 
     // Node.js: Use axios with retries
-    const nodeData = await onNodejsAsync(async (env) => {
+    const nodeData = await inNodejsAsync(async (env) => {
       const axios = require('axios');
       let retries = 3;
       
@@ -208,7 +208,7 @@ function setupCache(data: any) {
   });
 
   // Use IndexedDB in browser
-  onBrowser((env) => {
+  inBrowser((env) => {
     const request = indexedDB.open('appCache', 1);
     
     request.onerror = () => {
@@ -239,40 +239,88 @@ function setupCache(data: any) {
 
 ```typescript
 import {
-  isBrowser,  // true in browser environments
-  isNodejs,   // true in Node.js
-  isBun,      // true in Bun
-  isDeno      // true in Deno
+  isBrowser,     // true in browser environments
+  isNodejs,      // true in Node.js
+  isBun,         // true in Bun
+  isDeno,        // true in Deno
+  isUnknown,     // true when environment cannot be detected
+  isNotBrowser,  // true in non-browser environments
+  isNotNodejs,   // true in non-Node.js environments
+  isNotBun,      // true in non-Bun environments
+  isNotDeno,     // true in non-Deno environments
+  isNotUnknown   // true when environment is successfully detected
 } from "runtime-detector";
 ```
 
 ### Synchronous Execution APIs
 
+#### Preferred Functions (Recommended)
+
 | Function                 | Description            |
 | ------------------------ | ---------------------- |
-| `onBrowser(callback)`    | Execute in browser     |
-| `onNodejs(callback)`     | Execute in Node.js     |
-| `onBun(callback)`        | Execute in Bun         |
-| `onDeno(callback)`       | Execute in Deno        |
+| `inBrowser(callback)`    | Execute in browser     |
+| `inNodejs(callback)`     | Execute in Node.js     |
+| `inBun(callback)`        | Execute in Bun         |
+| `inDeno(callback)`       | Execute in Deno        |
 | `onNotBrowser(callback)` | Execute in non-browser |
 | `onNotNodejs(callback)`  | Execute in non-Node.js |
 | `onNotBun(callback)`     | Execute in non-Bun     |
 | `onNotDeno(callback)`    | Execute in non-Deno    |
+| `onUnknown(callback)`    | Execute in unknown env |
+
+#### Deprecated Functions (Legacy Support)
+
+> ⚠️ **Deprecated**: These functions are still available but will be removed in a future version. Please use the preferred functions above.
+
+| Function                 | Preferred Alternative |
+| ------------------------ | --------------------- |
+| `onBrowser(callback)`    | `inBrowser(callback)` |
+| `onNodejs(callback)`     | `inNodejs(callback)`  |
+| `onBun(callback)`        | `inBun(callback)`     |
+| `onDeno(callback)`       | `inDeno(callback)`    |
 
 ### Asynchronous Execution APIs
 
+#### Preferred Functions (Recommended)
+
 | Function                      | Description                  |
 | ----------------------------- | ---------------------------- |
-| `onBrowserAsync(callback)`    | Async execute in browser     |
-| `onNodejsAsync(callback)`     | Async execute in Node.js     |
-| `onBunAsync(callback)`        | Async execute in Bun         |
-| `onDenoAsync(callback)`       | Async execute in Deno        |
+| `inBrowserAsync(callback)`    | Async execute in browser     |
+| `inNodejsAsync(callback)`     | Async execute in Node.js     |
+| `inBunAsync(callback)`        | Async execute in Bun         |
+| `inDenoAsync(callback)`       | Async execute in Deno        |
 | `onNotBrowserAsync(callback)` | Async execute in non-browser |
 | `onNotNodejsAsync(callback)`  | Async execute in non-Node.js |
 | `onNotBunAsync(callback)`     | Async execute in non-Bun     |
 | `onNotDenoAsync(callback)`    | Async execute in non-Deno    |
+| `onUnknownAsync(callback)`    | Async execute in unknown env |
+
+#### Deprecated Functions (Legacy Support)
+
+> ⚠️ **Deprecated**: These functions are still available but will be removed in a future version. Please use the preferred functions above.
+
+| Function                      | Preferred Alternative        |
+| ----------------------------- | ---------------------------- |
+| `onBrowserAsync(callback)`    | `inBrowserAsync(callback)`   |
+| `onNodejsAsync(callback)`     | `inNodejsAsync(callback)`    |
+| `onBunAsync(callback)`        | `inBunAsync(callback)`       |
+| `onDenoAsync(callback)`       | `inDenoAsync(callback)`      |
 
 ## 📋 Release Notes
+
+### 1.2.1
+
+- 📚 **Documentation**: Comprehensive JSDoc improvements
+  - Added detailed JSDoc comments for all functions and types
+  - Improved examples and usage documentation
+  - Added `@deprecated` tags for legacy functions
+  - Enhanced type documentation and cross-references
+
+- ✨ **API Enhancement**: Introduced preferred function naming
+  - New preferred functions: `inBrowser`, `inNodejs`, `inBun`, `inDeno`, `inBrowserAsync`, etc.
+  - Legacy functions (`onBrowser`, `onNodejs`, etc.) are now deprecated but still supported
+  - Added new environment detection flags: `isUnknown`, `isNotUnknown`
+  - All deprecated functions include proper migration guidance
 
 ### 1.2.0
 
@@ -370,19 +418,19 @@ function setupConfig() {
 ### 환경별 코드 실행
 
 ```typescript
-import { onNodejs, onBrowser, onBun, onDeno } from "runtime-detector";
+import { inNodejs, inBrowser, inBun, inDeno } from "runtime-detector";
 
 // 다양한 환경에서의 파일 처리
 function saveData(content: string) {
   // Node.js: fs 모듈 사용 및 오류 처리
-  onNodejs((env) => {
+  inNodejs((env) => {
     const fs = require('fs').promises;
     return fs.writeFile('data.json', content)
       .catch(err => console.error(`Node.js ${env.version}에서 파일 쓰기 실패:`, err));
   });
 
   // 브라우저: localStorage 사용 및 용량 확인
-  onBrowser((env) => {
+  inBrowser((env) => {
     try {
       const maxSize = 5 * 1024 * 1024; // 5MB
       if (content.length > maxSize) {
@@ -396,7 +444,7 @@ function saveData(content: string) {
   });
 
   // Bun: 네이티브 파일 API 활용
-  onBun((env) => {
+  inBun((env) => {
     try {
       Bun.write('data.json', content);
       console.log(`Bun ${env.version}에서 파일 작성 완료`);
@@ -406,7 +454,7 @@ function saveData(content: string) {
   });
 
   // Deno: 권한 관리와 함께 네이티브 API 사용
-  onDeno((env) => {
+  inDeno((env) => {
     try {
       Deno.writeTextFileSync('data.json', content);
       console.log(`Deno ${env.version}에서 파일 작성 완료`);
@@ -419,13 +467,13 @@ function saveData(content: string) {
 ### 오류 처리를 포함한 비동기 작업
 
 ```typescript
-import { onNodejsAsync, onBrowserAsync } from "runtime-detector";
+import { inNodejsAsync, inBrowserAsync } from "runtime-detector";
 
 // 환경별 최적화된 API 클라이언트
 class APIClient {
   async fetchData(endpoint: string) {
     // 브라우저: 타임아웃이 있는 네이티브 fetch 사용
-    const browserData = await onBrowserAsync(async (env) => {
+    const browserData = await inBrowserAsync(async (env) => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
       
@@ -449,7 +497,7 @@ class APIClient {
     });
 
     // Node.js: axios 사용 및 재시도 로직 구현
-    const nodeData = await onNodejsAsync(async (env) => {
+    const nodeData = await inNodejsAsync(async (env) => {
       const axios = require('axios');
       let retries = 3;
       
@@ -531,40 +579,88 @@ function setupCache(data: any) {
 
 ```typescript
 import {
-  isBrowser,  // 브라우저 환경에서 true
-  isNodejs,   // Node.js에서 true
-  isBun,      // Bun에서 true
-  isDeno      // Deno에서 true
+  isBrowser,     // 브라우저 환경에서 true
+  isNodejs,      // Node.js에서 true
+  isBun,         // Bun에서 true
+  isDeno,        // Deno에서 true
+  isUnknown,     // 환경을 감지할 수 없을 때 true
+  isNotBrowser,  // 브라우저가 아닌 환경에서 true
+  isNotNodejs,   // Node.js가 아닌 환경에서 true
+  isNotBun,      // Bun이 아닌 환경에서 true
+  isNotDeno,     // Deno가 아닌 환경에서 true
+  isNotUnknown   // 환경이 성공적으로 감지되었을 때 true
 } from "runtime-detector";
 ```
 
 ### 동기 실행 API
 
+#### 권장 함수 (Recommended)
+
 | 함수                     | 설명                          |
 | ------------------------ | ----------------------------- |
-| `onBrowser(callback)`    | 브라우저에서 실행             |
-| `onNodejs(callback)`     | Node.js에서 실행              |
-| `onBun(callback)`        | Bun에서 실행                  |
-| `onDeno(callback)`       | Deno에서 실행                 |
+| `inBrowser(callback)`    | 브라우저에서 실행             |
+| `inNodejs(callback)`     | Node.js에서 실행              |
+| `inBun(callback)`        | Bun에서 실행                  |
+| `inDeno(callback)`       | Deno에서 실행                 |
 | `onNotBrowser(callback)` | 브라우저가 아닌 환경에서 실행 |
 | `onNotNodejs(callback)`  | Node.js가 아닌 환경에서 실행  |
 | `onNotBun(callback)`     | Bun이 아닌 환경에서 실행      |
 | `onNotDeno(callback)`    | Deno가 아닌 환경에서 실행     |
+| `onUnknown(callback)`    | 알 수 없는 환경에서 실행      |
+
+#### 더 이상 사용되지 않는 함수 (Legacy Support)
+
+> ⚠️ **Deprecated**: 이 함수들은 여전히 사용 가능하지만 향후 버전에서 제거될 예정입니다. 위의 권장 함수를 사용해 주세요.
+
+| 함수                     | 권장 대안                 |
+| ------------------------ | ------------------------- |
+| `onBrowser(callback)`    | `inBrowser(callback)`     |
+| `onNodejs(callback)`     | `inNodejs(callback)`      |
+| `onBun(callback)`        | `inBun(callback)`         |
+| `onDeno(callback)`       | `inDeno(callback)`        |
 
 ### 비동기 실행 API
 
+#### 권장 함수 (Recommended)
+
 | 함수                          | 설명                                 |
 | ----------------------------- | ------------------------------------ |
-| `onBrowserAsync(callback)`    | 브라우저에서 비동기 실행             |
-| `onNodejsAsync(callback)`     | Node.js에서 비동기 실행              |
-| `onBunAsync(callback)`        | Bun에서 비동기 실행                  |
-| `onDenoAsync(callback)`       | Deno에서 비동기 실행                 |
+| `inBrowserAsync(callback)`    | 브라우저에서 비동기 실행             |
+| `inNodejsAsync(callback)`     | Node.js에서 비동기 실행              |
+| `inBunAsync(callback)`        | Bun에서 비동기 실행                  |
+| `inDenoAsync(callback)`       | Deno에서 비동기 실행                 |
 | `onNotBrowserAsync(callback)` | 브라우저가 아닌 환경에서 비동기 실행 |
 | `onNotNodejsAsync(callback)`  | Node.js가 아닌 환경에서 비동기 실행  |
 | `onNotBunAsync(callback)`     | Bun이 아닌 환경에서 비동기 실행      |
 | `onNotDenoAsync(callback)`    | Deno가 아닌 환경에서 비동기 실행     |
+| `onUnknownAsync(callback)`    | 알 수 없는 환경에서 비동기 실행      |
+
+#### 더 이상 사용되지 않는 함수 (Legacy Support)
+
+> ⚠️ **Deprecated**: 이 함수들은 여전히 사용 가능하지만 향후 버전에서 제거될 예정입니다. 위의 권장 함수를 사용해 주세요.
+
+| 함수                          | 권장 대안                        |
+| ----------------------------- | -------------------------------- |
+| `onBrowserAsync(callback)`    | `inBrowserAsync(callback)`       |
+| `onNodejsAsync(callback)`     | `inNodejsAsync(callback)`        |
+| `onBunAsync(callback)`        | `inBunAsync(callback)`           |
+| `onDenoAsync(callback)`       | `inDenoAsync(callback)`          |
 
 ## 📋 릴리스 노트
+
+### 1.2.1
+
+- 📚 **문서화**: 포괄적인 JSDoc 개선
+  - 모든 함수와 타입에 대한 상세한 JSDoc 주석 추가
+  - 예제 및 사용법 문서 개선
+  - 레거시 함수에 `@deprecated` 태그 추가
+  - 타입 문서화 및 상호 참조 향상
+
+- ✨ **API 개선**: 선호하는 함수 명명법 도입
+  - 새로운 권장 함수들: `inBrowser`, `inNodejs`, `inBun`, `inDeno`, `inBrowserAsync` 등
+  - 레거시 함수들 (`onBrowser`, `onNodejs` 등)은 더 이상 사용되지 않지만 여전히 지원
+  - 새로운 환경 감지 플래그 추가: `isUnknown`, `isNotUnknown`
+  - 모든 deprecated 함수에 적절한 마이그레이션 가이드 포함
 
 ### 1.2.0
 
